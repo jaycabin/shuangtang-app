@@ -174,7 +174,7 @@ class AppTheme {
       hintStyle: const TextStyle(color: AppColors.greyText, fontSize: 15),
       labelStyle: const TextStyle(color: AppColors.caramel, fontSize: 14),
     ),
-    cardTheme: CardThemeData(
+    cardTheme: CardTheme(
       elevation: 0,
       color: AppColors.frostingWhite,
       shape: RoundedRectangleBorder(
@@ -201,4 +201,22 @@ class AppTheme {
       surface: AppColors.darkCard,
     ),
   );
+}
+
+  // ========== 向后兼容（旧屏幕引用） ==========
+  static const Color primaryStart = AppColors.peach;
+  static const Color primaryEnd = AppColors.warmOrange;
+  static const Color errorRed = AppColors.alertRed;
+  static const Color successGreen = AppColors.successGreen;
+  static const Color textPrimary = AppColors.darkText;
+  static const Color textSecondary = AppColors.caramel;
+  static const Color textHint = AppColors.greyText;
+  static const Color backgroundLight = AppColors.creamWhite;
+  static const double radiusSmall = AppRadius.input;
+  static const double radiusMedium = AppRadius.button;
+  static const double radiusLarge = AppRadius.card;
+  static List<BoxShadow> get cardShadow => AppShadows.card;
+  static List<BoxShadow> get buttonShadow => AppShadows.button;
+  static LinearGradient get buttonGradient => AppColors.brandGradient;
+  static LinearGradient get primaryGradient => AppColors.brandGradient;
 }
