@@ -1,32 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import '../../constants/theme.dart';
+import 'anniversary_screen.dart';
+import 'wishlist_screen.dart';
 import 'secret_message_screen.dart';
 import 'album_screen.dart';
-import 'wishlist_screen.dart';
-import 'anniversary_screen.dart';
+import 'location_screen.dart';
+import 'alarm_screen.dart';
+import 'notification_screen.dart';
 
-const _appVersion = '1.4.0';
+const _appVersion = '1.5.0';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
 
-  void _showToast(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, textAlign: TextAlign.center),
-      backgroundColor: AppColors.darkText,
-      behavior: SnackBarBehavior.floating,
+  void _toast(BuildContext c, String m) {
+    ScaffoldMessenger.of(c).showSnackBar(SnackBar(
+      content: Text(m, textAlign: TextAlign.center),
+      backgroundColor: AppColors.darkText, behavior: SnackBarBehavior.floating,
       margin: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.tag)),
-      duration: const Duration(milliseconds: 800),
     ));
   }
+
+  void _push(BuildContext c, Widget page) => Navigator.push(c, MaterialPageRoute(builder: (_) => page));
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('我的')),
+      appBar: AppBar(
+        title: const Text('我的'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: AppColors.caramel),
+            onPressed: () => _push(context, const NotificationScreen()),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         children: [
@@ -46,30 +57,27 @@ class MoreScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // 互动功能
-          const Text('互动', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.caramel)),
-          const SizedBox(height: 8),
-          _menuCard(context, '🎂 纪念日', '重要日期倒计时与提醒', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AnniversaryScreen()))),
-          _menuCard(context, '🏺 藏糖罐', '心愿认领与完成', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const WishlistScreen()))),
-          _menuCard(context, '✉️ 悄悄话信箱', '加密消息长按解密', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecretMessageScreen()))),
-          _menuCard(context, '📸 糖分相册', '保存每一颗糖的照片', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AlbumScreen()))),
-          _menuCard(context, '📍 位置共享', '实时追踪与靠近提醒', () => _showToast(context, '功能开发中')),
-          _menuCard(context, '⏰ 双糖闹钟', '只有对方能关闭', () => _showToast(context, '功能开发中')),
+          // 全部功能
+          _section('互动', [
+            _item('🎂 纪念日', '倒计时与提醒', () => _push(context, const AnniversaryScreen())),
+            _item('🏺 藏糖罐', '心愿认领', () => _push(context, const WishlistScreen())),
+            _item('✉️ 悄悄话', '加密消息', () => _push(context, const SecretMessageScreen())),
+            _item('📸 相册', '保存照片', () => _push(context, const AlbumScreen())),
+            _item('📍 位置共享', '实时追踪', () => _push(context, const LocationScreen())),
+            _item('⏰ 双糖闹钟', '只有你能关', () => _push(context, const AlarmScreen())),
+          ]),
 
           const SizedBox(height: 16),
-          const Text('设置', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.caramel)),
-          const SizedBox(height: 8),
-          _menuCard(context, '🌐 语言', '中文', () => Navigator.pushNamed(context, '/settings/language')),
-          _menuCard(context, 'ℹ️ 关于', 'v$_appVersion', () {}),
+          _section('设置', [
+            _item('🌐 语言', '中文', () => Navigator.pushNamed(context, '/settings/language')),
+            _item('ℹ️ 关于', 'v$_appVersion', () {}),
+          ]),
 
           const SizedBox(height: 32),
           Container(height: 48,
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.button), border: Border.all(color: AppColors.alertRed.withOpacity(0.3))),
             child: TextButton(
-              onPressed: () {
-                Hive.box('settings').clear();
-                Navigator.pushReplacementNamed(context, '/login');
-              },
+              onPressed: () { Hive.box('settings').clear(); Navigator.pushReplacementNamed(context, '/login'); },
               child: const Text('退出登录', style: TextStyle(color: AppColors.alertRed)),
             ),
           ),
@@ -79,9 +87,19 @@ class MoreScreen extends StatelessWidget {
     );
   }
 
-  Widget _menuCard(BuildContext context, String title, String subtitle, VoidCallback onTap) {
+  Widget _section(String title, List<Widget> items) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Padding(padding: const EdgeInsets.only(left: 4, bottom: 8),
+        child: Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.caramel))),
+      ...List.generate(items.length, (i) => Padding(
+        padding: EdgeInsets.only(bottom: i < items.length - 1 ? 6 : 0),
+        child: items[i],
+      )),
+    ]);
+  }
+
+  Widget _item(String title, String sub, VoidCallback onTap) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: AppColors.frostingWhite, borderRadius: BorderRadius.circular(AppRadius.card), boxShadow: AppShadows.card),
       child: InkWell(
@@ -90,8 +108,7 @@ class MoreScreen extends StatelessWidget {
         child: Row(children: [
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(title, style: AppTextStyles.body),
-            const SizedBox(height: 2),
-            Text(subtitle, style: AppTextStyles.caption),
+            Text(sub, style: AppTextStyles.caption),
           ])),
           const Icon(Icons.chevron_right, color: AppColors.greyText, size: 20),
         ]),

@@ -31,60 +31,53 @@ class _AlbumScreenState extends State<AlbumScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('📸 糖分相册')),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryStart))
-          : _photos.isEmpty ? _empty()
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: GridView.builder(
-                padding: const EdgeInsets.all(8),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3, crossAxisSpacing: 4, mainAxisSpacing: 4),
-                itemCount: _photos.length,
-                itemBuilder: (_, i) {
-                  return GestureDetector(
-                    onTap: () => _preview(_photos[i]['image_url'] ?? ''),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: AppTheme.primaryStart.withOpacity(0.05),
-                      ),
-                      child: const Center(child: Text('📷', style: TextStyle(fontSize: 32))),
-                    ),
-                  );
-                },
+        ? const Center(child: CircularProgressIndicator(color: AppColors.peach))
+        : _photos.isEmpty ? _empty()
+        : RefreshIndicator(
+            onRefresh: _load,
+            child: GridView.builder(
+              padding: const EdgeInsets.all(4),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 4, mainAxisSpacing: 4),
+              itemCount: _photos.length,
+              itemBuilder: (_, i) => Container(
+                decoration: BoxDecoration(color: AppColors.frostingWhite, borderRadius: BorderRadius.circular(8)),
+                child: const Center(child: Icon(Icons.image, color: AppColors.caramel, size: 32)),
               ),
             ),
+          ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showToast('请从相册选择照片'),
+        backgroundColor: AppColors.peach,
+        child: const Icon(Icons.camera_alt, color: Colors.white),
+      ),
     );
   }
 
-  void _preview(String url) {
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(height: 300, width: double.infinity,
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: Colors.black),
-            child: const Center(child: Text('🖼️', style: TextStyle(fontSize: 64))),
-          ),
-          const SizedBox(height: 16),
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('关闭', style: TextStyle(color: Colors.white))),
-        ]),
-      ),
-    );
+  void _showToast(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg, textAlign: TextAlign.center),
+      backgroundColor: AppColors.darkText,
+      behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.tag)),
+    ));
   }
 
   Widget _empty() => Center(
     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       const Text('📸', style: TextStyle(fontSize: 64)),
       const SizedBox(height: 16),
-      const Text('还没有糖，拍一张合影吧', style: TextStyle(color: AppTheme.textSecondary)),
-      const SizedBox(height: 8),
-      ElevatedButton.icon(
-        onPressed: () {},
-        icon: const Icon(Icons.camera_alt),
-        label: const Text('拍一张'),
-        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryStart, foregroundColor: Colors.white),
+      const Text('还没有糖，拍一张合影吧', style: TextStyle(color: AppColors.caramel, fontSize: 15)),
+      const SizedBox(height: 24),
+      Container(height: 48,
+        decoration: BoxDecoration(gradient: AppColors.brandGradient, borderRadius: BorderRadius.circular(AppRadius.button), boxShadow: AppShadows.button),
+        child: ElevatedButton.icon(
+          onPressed: () => _showToast('请从相册选择照片'),
+          icon: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+          label: const Text('存一颗糖', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))),
+        ),
       ),
     ]),
   );
