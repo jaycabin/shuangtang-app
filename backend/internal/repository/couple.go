@@ -18,10 +18,10 @@ func NewCoupleRepo(pool *pgxpool.Pool) *CoupleRepo {
 }
 
 func (r *CoupleRepo) Create(ctx context.Context, couple *model.Couple) error {
-	query := `INSERT INTO couples (id, user1_id, invitation_code, status, created_at, updated_at)
-	          VALUES ($1, $2, $3, 'pending', NOW(), NOW()) RETURNING created_at, updated_at`
-	return r.pool.QueryRow(ctx, query, couple.ID, couple.User1ID, couple.InvitationCode).
-		Scan(&couple.CreatedAt, &couple.UpdatedAt)
+	query := `INSERT INTO couples (id, user1_id, user2_id, invitation_code, status, started_at, created_at, updated_at)
+	          VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) RETURNING created_at, updated_at`
+	return r.pool.QueryRow(ctx, query, couple.ID, couple.User1ID, couple.User2ID,
+		couple.InvitationCode, couple.Status, couple.StartedAt).Scan(&couple.CreatedAt, &couple.UpdatedAt)
 }
 
 func (r *CoupleRepo) FindByInvitationCode(ctx context.Context, code string) (*model.Couple, error) {

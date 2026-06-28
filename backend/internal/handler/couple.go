@@ -3,6 +3,7 @@ package handler
 import (
 	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -69,11 +70,14 @@ func (h *CoupleHandler) Create(c *gin.Context) {
 		return
 	}
 
+	now := time.Now()
 	couple := &model.Couple{
 		ID:             uuid.New(),
 		User1ID:        userID,
+		User2ID:        &userID,
 		InvitationCode: generateInvitationCode(),
-		Status:         "pending",
+		Status:         "active",
+		StartedAt:      &now,
 	}
 
 	if err := h.coupleRepo.Create(c.Request.Context(), couple); err != nil {
