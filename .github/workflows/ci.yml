@@ -1,4 +1,4 @@
-name: CI - Build & Release
+name: CI - Build Flutter APK & IPA
 
 on:
   push:
@@ -7,114 +7,7 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  REGISTRY: ghcr.io
-  BACKEND_IMAGE: shuangtang-backend
-
 jobs:
-  backend:
-    name: Backend - Test & Build
-    runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: shuangtang
-          POSTGRES_PASSWORD: shuangtang_test
-          POSTGRES_DB: shuangtang_test
-        ports:
-          - 15432:5432
-        options: >-
-          --health-cmd "pg_isready -U shuangtang"
-          --health-interval 10s --health-timeout 5s --health-retries 5
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 16379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s --health-timeout 5s --health-retries 5
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.25"
-          cache-dependency-path: backend/go.sum
-
-      - name: Cache Go modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('backend/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-
-
-      - name: Run tests
-        working-directory: ./backend
-        run: go test ./... -v -cover
-        env:
-          DB_HOST: localhost
-          DB_PORT: 15432
-          DB_USER: shuangtang
-          DB_PASSWORD: shuangtang_test
-          DB_NAME: shuangtang_test
-          REDIS_HOST: localhost
-          REDIS_PORT: 16379
-          JWT_SECRET: test-secret
-          DEFAULT_LANG: zh
-
-      - name: Build Linux binary
-        working-directory: ./backend
-        run: go build -ldflags="-s -w" -o shuangtang-backend-linux ./cmd/server
-
-      - name: Build Windows binary
-        working-directory: ./backend
-        run: GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o shuangtang-backend.exe ./cmd/server
-
-      - name: Build macOS binary
-        working-directory: ./backend
-        run: GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o shuangtang-backend-macos ./cmd/server
-
-      - name: Package backend zip
-        run: |
-          cd backend
-          cp .env.example .env
-          zip -r ../shuangtang-backend.zip \
-            shuangtang-backend-linux shuangtang-backend.exe shuangtang-backend-macos \
-            locales/ migrations/ web/ entrypoint.sh .env Dockerfile docker-compose.yml Makefile
-          cd ..
-
-      - name: Login to GitHub Container Registry
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & push Docker image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.BACKEND_IMAGE }}:latest
-            ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
-
-      - name: Upload backend zip artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: shuangtang-backend
-          path: shuangtang-backend.zip
-          retention-days: 30
-
   build-apk:
     name: Flutter - Build APK
     runs-on: ubuntu-latest
@@ -145,7 +38,7 @@ jobs:
         working-directory: ./frontend
         run: flutter build apk --release
 
-      - name: Rename APKs with version
+      - name: Rename APKs
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           cd frontend/build/app/outputs/flutter-apk
@@ -153,7 +46,6 @@ jobs:
           mv app-armeabi-v7a-release.apk shuangtang-v${VERSION}-armeabi-v7a.apk 2>/dev/null || true
           mv app-arm64-v8a-release.apk shuangtang-v${VERSION}-arm64-v8a.apk 2>/dev/null || true
           mv app-x86_64-release.apk shuangtang-v${VERSION}-x86_64.apk 2>/dev/null || true
-          ls -la
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
@@ -204,6 +96,7 @@ jobs:
   build-ipa:
     name: Flutter - Build IPA (unsigned)
     runs-on: macos-latest
+    if: false  # IPA 需要 Apple Developer 签名，默认禁用；需用时设为 true
 
     steps:
       - uses: actions/checkout@v4
@@ -227,7 +120,7 @@ jobs:
         working-directory: ./frontend
         run: flutter create --project-name shuangtang_app --platforms=ios .
 
-      - name: Build iOS (no codesign)
+      - name: Build iOS
         working-directory: ./frontend
         run: flutter build ios --release --no-codesign
 
@@ -238,8 +131,6 @@ jobs:
           cp -r frontend/build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
           cd build/ios/ipa
           zip -r ../../../shuangtang_v${VERSION}_ios.ipa Payload/
-          echo "IPA created:"
-          ls -la ../../../*.ipa
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
@@ -250,78 +141,17 @@ jobs:
 
   release:
     name: GitHub Release
-    needs: [backend, build-apk, build-appbundle, build-ipa]
+    needs: [build-apk, build-appbundle]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download all artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-
-      - name: List artifacts
-        run: find artifacts -type f -ls
-
-      - name: Generate release notes
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          cat > RELEASE_NOTES.md << 'EOF'
-          # 🍬 双糖 v${VERSION} - Release Notes
-
-          ## ✨ 亮点
-          双糖 (DoubleSugar) 是一款情侣专属私密空间APP，用"糖"的隐喻串联所有甜蜜互动。
-
-          ## 📦 下载指南
-
-          ### 🤖 Android
-          | 文件 | 架构 | 说明 |
-          |------|------|------|
-          | `shuangtang-*-universal.apk` | all | 通用包，兼容所有设备 |
-          | `shuangtang-*-arm64-v8a.apk` | 64位 | 推荐现代手机使用 |
-          | `shuangtang-*-armeabi-v7a.apk` | 32位 | 兼容旧设备 |
-          | `shuangtang-*-x86_64.apk` | x86 | 模拟器使用 |
-          | `shuangtang-*.aab` | - | Google Play 发布格式 |
-
-          ### 🍎 iOS
-          | 文件 | 说明 |
-          |------|------|
-          | `shuangtang_*_ios.ipa` | 未签名 IPA，需使用 Apple Developer 账号签名后安装 |
-
-          ### 🖥️ 后端
-          | 文件 | 说明 |
-          |------|------|
-          | `shuangtang-backend.zip` | 包含 Linux/Windows/macOS 三平台二进制 + 配置文件 |
-
-          ## 🚀 快速部署
-          EOF
-
-          # Add version-specific content
-          cat >> RELEASE_NOTES.md << 'EOF'
-
-          ## 后端部署
-          ```bash
-          unzip shuangtang-backend.zip -d shuangtang-backend
-          cd shuangtang-backend
-          chmod +x shuangtang-backend-linux
-          ./shuangtang-backend-linux
-          ```
-
-          或使用 Docker：
-          ```bash
-          docker compose up -d
-          ```
-
-          ## 技术栈
-          - **前端**: Flutter 3.19 (Riverpod, flutter_localizations)
-          - **后端**: Go 1.22 (Gin, PostgreSQL, Redis, MinIO)
-          - **部署**: Docker Compose, GitHub Actions
-
-          ---
-          > 两颗心，双倍糖。Two hearts, double the sweetness.
-          EOF
 
       - name: Create Release
         env:
@@ -332,32 +162,7 @@ jobs:
           [ -d "artifacts/shuangtang-apk" ] && FILES="$FILES artifacts/shuangtang-apk/*.apk"
           [ -d "artifacts/shuangtang-aab" ] && FILES="$FILES artifacts/shuangtang-aab/*.aab"
           [ -d "artifacts/shuangtang-ipa" ] && FILES="$FILES artifacts/shuangtang-ipa/*.ipa"
-          [ -d "artifacts/shuangtang-backend" ] && FILES="$FILES artifacts/shuangtang-backend/shuangtang-backend.zip"
-          echo "Uploading files: $FILES"
           gh release create "${VERSION}" \
             --title "双糖 v${VERSION#v}" \
-            --notes-file RELEASE_NOTES.md \
+            --notes "自动构建于 $(date -u +'%Y-%m-%d %H:%M UTC')" \
             $FILES
-
-  release-summary:
-    name: Build Summary
-    needs: [backend, build-apk, build-appbundle, build-ipa]
-    if: always() && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Generate build summary
-        run: |
-          echo "## 🍬 双糖构建报告" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| 模块 | 状态 | 产物 |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|------|------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Backend | ✅ | Linux/Windows/macOS 三平台二进制 + Docker 镜像 |" >> $GITHUB_STEP_SUMMARY
-          echo "| APK | ✅ | universal + arm64-v8a + armeabi-v7a + x86_64 |" >> $GITHUB_STEP_SUMMARY
-          echo "| AAB | ✅ | Google Play 发布包 |" >> $GITHUB_STEP_SUMMARY
-          echo "| IPA | ✅ | iOS 安装包（未签名） |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "提交: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "🎉 Release: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          fi
