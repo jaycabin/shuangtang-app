@@ -121,14 +121,14 @@ func (h *Hub) HandleLocationUpdate(client *Client, data []byte) {
 	// Publish to Redis for persistence
 	if h.redis != nil {
 		key := "location:" + client.CoupleID.String() + ":" + client.UserID.String()
-		h.redis.Set(ctx, key, string(msg), 30*time.Second)
+		h.redis.Set(bgCtx, key, string(msg), 30*time.Second)
 	}
 
 	// Broadcast to partner in the room
 	h.BroadcastToRoom(client.CoupleID, msg, client.UserID)
 }
 
-var ctx = context.Background()
+var bgCtx = context.Background()
 
 func (c *Client) ReadPump() {
 	defer func() {
