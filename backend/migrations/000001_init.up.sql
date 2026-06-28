@@ -2,7 +2,7 @@
 -- 使用 UUID 主键，合理索引
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "postgis";
+-- CREATE EXTENSION IF NOT EXISTS "postgis"; -- 需要时取消注释，普通开发不需要
 
 -- 用户表
 CREATE TABLE users (

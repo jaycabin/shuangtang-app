@@ -48,9 +48,11 @@ func main() {
 		DB:       cfg.Redis.DB,
 	})
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
-		logger.Fatal().Err(err).Msg("Failed to connect to Redis")
+		logger.Warn().Err(err).Msg("Redis not available, running without cache/real-time features")
+		rdb = nil
+	} else {
+		logger.Info().Msg("Redis connected")
 	}
-	logger.Info().Msg("Redis connected")
 
 	userRepo := repository.NewUserRepo(dbPool)
 	coupleRepo := repository.NewCoupleRepo(dbPool)

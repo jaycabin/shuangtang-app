@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -22,6 +23,8 @@ type AuthService struct {
 	redis      *redis.Client
 	cfg        *config.JWTConfig
 	emailSvc   *EmailService
+	// 内存缓存（Redis 不可用时降级）
+	memoryCache sync.Map
 }
 
 func NewAuthService(userRepo *repository.UserRepo, coupleRepo *repository.CoupleRepo,
@@ -36,39 +39,64 @@ func NewAuthService(userRepo *repository.UserRepo, coupleRepo *repository.Couple
 }
 
 func (s *AuthService) SendVerificationCode(ctx context.Context, email, lang string) error {
-	rateLimitKey := fmt.Sprintf("code:rate:%s", email)
-	exists, _ := s.redis.Exists(ctx, rateLimitKey).Result()
-	if exists > 0 {
-		return fmt.Errorf("too_frequent")
+	rateLimitKey := "rate:" + email
+	if s.redis != nil {
+		exists, _ := s.redis.Exists(ctx, rateLimitKey).Result()
+		if exists > 0 {
+			return fmt.Errorf("too_frequent")
+		}
+	} else {
+		if _, ok := s.memoryCache.Load(rateLimitKey); ok {
+			return fmt.Errorf("too_frequent")
+		}
 	}
 
 	code := fmt.Sprintf("%06d", rand.Intn(1000000))
+	codeKey := "code:" + email
 
-	codeKey := fmt.Sprintf("code:verification:%s", email)
-	if err := s.redis.Set(ctx, codeKey, code, 5*time.Minute).Err(); err != nil {
-		return err
-	}
-
-	if err := s.redis.Set(ctx, rateLimitKey, "1", 60*time.Second).Err(); err != nil {
-		return err
+	if s.redis != nil {
+		s.redis.Set(ctx, codeKey, code, 5*time.Minute)
+		s.redis.Set(ctx, rateLimitKey, "1", 60*time.Second)
+	} else {
+		s.memoryCache.Store(codeKey, code)
+		s.memoryCache.Store(rateLimitKey, "1")
+		go func() { time.Sleep(5 * time.Minute); s.memoryCache.Delete(codeKey) }()
+		go func() { time.Sleep(60 * time.Second); s.memoryCache.Delete(rateLimitKey) }()
 	}
 
 	return s.emailSvc.SendVerificationCode(email, code, lang, 5)
 }
 
 func (s *AuthService) VerifyCode(ctx context.Context, email, code string) error {
-	codeKey := fmt.Sprintf("code:verification:%s", email)
-	stored, err := s.redis.Get(ctx, codeKey).Result()
-	if err == redis.Nil {
-		return fmt.Errorf("code_expired")
+	codeKey := "code:" + email
+	var stored string
+
+	if s.redis != nil {
+		var err error
+		stored, err = s.redis.Get(ctx, codeKey).Result()
+		if err == redis.Nil {
+			return fmt.Errorf("code_expired")
+		}
+		if err != nil {
+			return err
+		}
+	} else {
+		val, ok := s.memoryCache.Load(codeKey)
+		if !ok {
+			return fmt.Errorf("code_expired")
+		}
+		stored = val.(string)
 	}
-	if err != nil {
-		return err
-	}
+
 	if stored != code {
 		return fmt.Errorf("code_invalid")
 	}
-	s.redis.Del(ctx, codeKey)
+
+	if s.redis != nil {
+		s.redis.Del(ctx, codeKey)
+	} else {
+		s.memoryCache.Delete(codeKey)
+	}
 	return nil
 }
 
