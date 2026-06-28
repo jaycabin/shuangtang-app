@@ -51,7 +51,7 @@ class _AnniversaryScreenState extends State<AnniversaryScreen> {
           const SizedBox(height: 8),
           TextField(controller: dCtl, readOnly: true, decoration: const InputDecoration(labelText: '日期'),
             onTap: () async {
-              picked = await showDatePicker(ctx: ctx, firstDate: DateTime(2000), lastDate: DateTime(2100));
+              picked = await showDatePicker(context: context, firstDate: DateTime(2000), lastDate: DateTime(2100));
               if (picked != null) dCtl.text = picked.toString().substring(0, 10);
             }),
         ]),
