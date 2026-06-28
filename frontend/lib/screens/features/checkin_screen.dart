@@ -22,7 +22,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
     try {
       final r = await _api.getCheckInTasks();
       _tasks = (r['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-    } catch (_) {}
+    } catch (e) { debugPrint("err: $e"); }
     setState(() => _loading = false);
   }
 
@@ -30,7 +30,7 @@ class _CheckInScreenState extends State<CheckInScreen> {
     try {
       await _api.doCheckIn(id);
       _load();
-    } catch (_) {}
+    } catch (e) { debugPrint("err: $e"); }
   }
 
   @override

@@ -22,7 +22,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
     try {
       final r = await _api.getAlbums();
       _photos = (r['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-    } catch (_) {}
+    } catch (e) { debugPrint("err: $e"); }
     setState(() => _loading = false);
   }
 

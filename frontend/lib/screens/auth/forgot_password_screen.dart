@@ -70,7 +70,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           else if (m.toString().contains('错误')) msg = '验证码错误';
           else msg = m;
         }
-      } catch (_) {}
+      } catch (e) { debugPrint("err: $e"); }
       _showToast(msg);
     } finally { if (mounted) setState(() => _loading = false); }
   }

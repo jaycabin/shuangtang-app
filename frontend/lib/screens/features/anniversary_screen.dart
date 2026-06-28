@@ -31,9 +31,9 @@ class _AnniversaryScreenState extends State<AnniversaryScreen> {
           if (d.month == DateTime.now().month && d.day == DateTime.now().day) {
             WidgetsBinding.instance.addPostFrameCallback((_) => _showCelebration(a));
           }
-        } catch (_) {}
+        } catch (e) { debugPrint("err: $e"); }
       }
-    } catch (_) {}
+    } catch (e) { debugPrint("err: $e"); }
     setState(() => _loading = false);
   }
 

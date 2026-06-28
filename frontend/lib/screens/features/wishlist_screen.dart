@@ -22,7 +22,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
     try {
       final r = await _api.getWishlist();
       _items = (r['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-    } catch (_) {}
+    } catch (e) { debugPrint("err: $e"); }
     setState(() => _loading = false);
   }
 

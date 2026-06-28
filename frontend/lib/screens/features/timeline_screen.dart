@@ -32,11 +32,11 @@ class _TimelineScreenState extends State<TimelineScreen> {
       final tlR = await _api.getTimeline();
       _moments = (tlR['data']?['moments'] as List?)?.cast<Map<String, dynamic>>() ?? [];
       _days = tlR['data']?['days_since'] ?? _days;
-    } catch (_) {}
+    } catch (e) { debugPrint("err: $e"); }
     try {
       final aR = await _api.getAnniversaries();
       _anniversaries = (aR['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-    } catch (_) {}
+    } catch (e) { debugPrint("err: $e"); }
     setState(() => _loading = false);
   }
 
@@ -138,7 +138,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
       Container(height: 48,
         decoration: BoxDecoration(gradient: AppColors.brandGradient, borderRadius: BorderRadius.circular(AppRadius.button), boxShadow: AppShadows.button),
         child: ElevatedButton(
-          onPressed: () {},
+          onPressed: () { Navigator.pushReplacementNamed(context, "/home"); },
           style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent,
             padding: const EdgeInsets.symmetric(horizontal: 32), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))),
           child: const Text('撒第一颗糖', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),

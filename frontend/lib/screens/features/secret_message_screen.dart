@@ -22,7 +22,7 @@ class _SecretMessageScreenState extends State<SecretMessageScreen> {
     try {
       final r = await _api.getSecretMessages();
       _msgs = (r['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-    } catch (_) {}
+    } catch (e) { debugPrint("err: $e"); }
     setState(() => _loading = false);
   }
 
