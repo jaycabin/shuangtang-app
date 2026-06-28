@@ -5,10 +5,11 @@ RUN apk add --no-cache git ca-certificates
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+# Railway 构建上下文是仓库根目录，所有路径加 backend/ 前缀
+COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
-COPY . .
+COPY backend/ .
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
   go build -ldflags="-s -w" -o server ./cmd/server
@@ -28,7 +29,7 @@ COPY --from=builder /app/migrate .
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/locales ./locales
 COPY --from=builder /app/web ./web
-COPY entrypoint.sh .
+COPY backend/entrypoint.sh .
 
 RUN chmod +x entrypoint.sh
 

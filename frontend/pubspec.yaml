@@ -9,9 +9,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Supabase (全栈后端替代)
-  supabase_flutter: ^2.5.0
-
   # State management
   flutter_riverpod: ^2.4.9
 
