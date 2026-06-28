@@ -10,6 +10,10 @@
 - **后端**: Go 1.22+ (Gin, PostgreSQL, Redis, MinIO)
 - **部署**: Docker Compose, GitHub Actions CI/CD
 
+[![CI](https://github.com/jaycabin/shuangtang-app/actions/workflows/ci.yml/badge.svg)](https://github.com/jaycabin/shuangtang-app/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Flutter](https://img.shields.io/badge/Flutter-3.19-blue)](https://flutter.dev)
+
 ## 快速启动
 
 ```bash
