@@ -237,16 +237,15 @@ jobs:
           mkdir -p build/ios/ipa/Payload
           cp -r frontend/build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
           cd build/ios/ipa
-          zip -r ../shuangtang-v${VERSION}.ipa Payload/
-          cd ../..
-          mv ios/shuangtang-v${VERSION}.ipa .
-          ls -la *.ipa
+          zip -r ../../../shuangtang_v${VERSION}_ios.ipa Payload/
+          echo "IPA created:"
+          ls -la ../../../*.ipa
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
           name: shuangtang-ipa
-          path: shuangtang-v*.ipa
+          path: shuangtang_v*_ios.ipa
           retention-days: 30
 
   release:
@@ -289,7 +288,7 @@ jobs:
           ### 🍎 iOS
           | 文件 | 说明 |
           |------|------|
-          | `shuangtang-*.ipa` | 未签名 IPA，需使用 Apple Developer 账号签名后安装 |
+          | `shuangtang_*_ios.ipa` | 未签名 IPA，需使用 Apple Developer 账号签名后安装 |
 
           ### 🖥️ 后端
           | 文件 | 说明 |
@@ -329,13 +328,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="${GITHUB_REF_NAME}"
+          FILES=""
+          [ -d "artifacts/shuangtang-apk" ] && FILES="$FILES artifacts/shuangtang-apk/*.apk"
+          [ -d "artifacts/shuangtang-aab" ] && FILES="$FILES artifacts/shuangtang-aab/*.aab"
+          [ -d "artifacts/shuangtang-ipa" ] && FILES="$FILES artifacts/shuangtang-ipa/*.ipa"
+          [ -d "artifacts/shuangtang-backend" ] && FILES="$FILES artifacts/shuangtang-backend/shuangtang-backend.zip"
+          echo "Uploading files: $FILES"
           gh release create "${VERSION}" \
             --title "双糖 v${VERSION#v}" \
             --notes-file RELEASE_NOTES.md \
-            artifacts/shuangtang-apk/*.apk \
-            artifacts/shuangtang-aab/*.aab \
-            artifacts/shuangtang-ipa/*.ipa \
-            artifacts/shuangtang-backend/shuangtang-backend.zip
+            $FILES
 
   release-summary:
     name: Build Summary
