@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/theme.dart';
 import '../../services/api_service.dart';
+import '../../generated/l10n/app_localizations.dart';
 
 final _api = ApiService();
 
@@ -28,7 +29,7 @@ class _AlarmScreenState extends State<AlarmScreen> {
       _descCtl.clear();
       _showToast('⏰ 闹钟已设置');
     } catch (_) {
-      _showToast('设置失败');
+      _showToast(AppLocalizations.of(context)!.toast_create_fail);
     } finally { if (mounted) setState(() => _loading = false); }
   }
 

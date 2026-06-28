@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../constants/theme.dart';
+import '../../generated/l10n/app_localizations.dart';
 import '../../services/api_service.dart';
 
 final _api = ApiService();
@@ -46,7 +47,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _startCountdown();
       setState(() => _step = 1);
     } catch (_) {
-      _showToast('发送失败');
+      _showToast(AppLocalizations.of(context)!.toast_send_fail);
     } finally { if (mounted) setState(() => _loading = false); }
   }
 
@@ -62,12 +63,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await Future.delayed(const Duration(milliseconds: 600));
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      String msg = '重置失败';
+      String msg = AppLocalizations.of(context)!.toast_reset_fail;
       try { final body = (e as dynamic).response?.data;
         if (body != null) {
           final m = body['message'] ?? '';
-          if (m.toString().contains('过期')) msg = '验证码已过期';
-          else if (m.toString().contains('错误')) msg = '验证码错误';
+          if (m.toString().contains('过期')) msg = AppLocalizations.of(context)!.toast_code_expired;
+          else if (m.toString().contains('错误')) msg = AppLocalizations.of(context)!.toast_code_error;
           else msg = m;
         }
       } catch (e) { debugPrint("err: $e"); }

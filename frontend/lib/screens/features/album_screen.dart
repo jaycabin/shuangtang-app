@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/theme.dart';
 import '../../services/api_service.dart';
+import '../../generated/l10n/app_localizations.dart';
 
 final _api = ApiService();
 
@@ -46,7 +47,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
             ),
           ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showToast('请从相册选择照片'),
+        onPressed: () => _showToast(AppLocalizations.of(context)!.toast_select_photo),
         backgroundColor: AppColors.peach,
         child: const Icon(Icons.camera_alt, color: Colors.white),
       ),
@@ -72,7 +73,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
       Container(height: 48,
         decoration: BoxDecoration(gradient: AppColors.brandGradient, borderRadius: BorderRadius.circular(AppRadius.button), boxShadow: AppShadows.button),
         child: ElevatedButton.icon(
-          onPressed: () => _showToast('请从相册选择照片'),
+          onPressed: () => _showToast(AppLocalizations.of(context)!.toast_select_photo),
           icon: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
           label: const Text('存一颗糖', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent,

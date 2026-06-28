@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/theme.dart';
+import '../generated/l10n/app_localizations.dart';
 import '../services/api_service.dart';
 import 'features/timeline_screen.dart';
 import 'features/checkin_screen.dart';
@@ -45,17 +46,17 @@ class _HomeScreenState extends State<HomeScreen> {
       await _showInviteDialog();
       await _checkCouple();
     } catch (e) {
-      _showToast('创建失败', isError: true);
+      _showToast(AppLocalizations.of(context)!.toast_create_fail, isError: true);
     }
   }
 
   Future<void> _joinCouple(String code) async {
     try {
       await _api.joinCouple(code.trim().toUpperCase());
-      _showToast('🎉 加入成功');
+      _showToast(AppLocalizations.of(context)!.toast_join_success);
       await _checkCouple();
     } catch (e) {
-      _showToast('邀请码无效', isError: true);
+      _showToast(AppLocalizations.of(context)!.toast_invalid_code, isError: true);
     }
   }
 
@@ -70,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Text('邀请码（点击复制）：'),
           const SizedBox(height: 16),
           GestureDetector(
-            onTap: () { _showToast('已复制'); },
+            onTap: () { _showToast(AppLocalizations.of(context)!.toast_copied); },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(color: AppColors.frostingWhite, borderRadius: BorderRadius.circular(AppRadius.input)),
@@ -261,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       await _api.createMoment({'content': ctl.text.trim()});
                       Navigator.pop(ctx);
                       _showToast('糖已撒出 🍬');
-                    } catch (e) { _showToast('发送失败'); }
+                    } catch (e) { _showToast(AppLocalizations.of(context)!.toast_send_fail); }
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent,
                     padding: const EdgeInsets.symmetric(horizontal: 24), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22))),

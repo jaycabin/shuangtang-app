@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../constants/theme.dart';
 import '../../services/api_service.dart';
+import '../../generated/l10n/app_localizations.dart';
 
 final _api = ApiService();
 
@@ -43,9 +44,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       await _api.sendCode(_emailCtl.text);
       _startCountdown();
-      _showToast('验证码已发送');
+      _showToast(AppLocalizations.of(context)!.toast_register_success);
     } catch (_) {
-      _showToast('发送失败');
+      _showToast(AppLocalizations.of(context)!.toast_send_fail);
     } finally { if (mounted) setState(() => _loading = false); }
   }
 
@@ -57,18 +58,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
       // 注册成功后自动登录（保存 token）
       await _api.login(_emailCtl.text, _passCtl.text);
       if (!mounted) return;
-      _showToast('🎉 注册成功');
+      _showToast(AppLocalizations.of(context)!.toast_register_success);
       await Future.delayed(const Duration(milliseconds: 600));
       if (mounted) Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
-      String msg = '注册失败';
+      String msg = AppLocalizations.of(context)!.toast_register_fail;
       try {
         final body = (e as dynamic).response?.data;
         if (body != null) {
           final m = body['message'] ?? '';
-          if (m.toString().contains('已注册')) msg = '邮箱已注册';
-          else if (m.toString().contains('过期')) msg = '验证码已过期';
-          else if (m.toString().contains('错误')) msg = '验证码错误';
+          if (m.toString().contains('已注册')) msg = AppLocalizations.of(context)!.toast_email_exists;
+          else if (m.toString().contains('过期')) msg = AppLocalizations.of(context)!.toast_code_expired;
+          else if (m.toString().contains('错误')) msg = AppLocalizations.of(context)!.toast_code_error;
           else msg = m;
         }
       } catch (e) { debugPrint("err: $e"); }
