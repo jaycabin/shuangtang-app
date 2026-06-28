@@ -201,7 +201,6 @@ class AppTheme {
       surface: AppColors.darkCard,
     ),
   );
-}
 
   // ========== 向后兼容（旧屏幕引用） ==========
   static const Color primaryStart = AppColors.peach;
