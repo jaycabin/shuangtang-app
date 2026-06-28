@@ -211,6 +211,7 @@ class AppTheme {
   static const Color textSecondary = AppColors.caramel;
   static const Color textHint = AppColors.greyText;
   static const Color backgroundLight = AppColors.creamWhite;
+  static const Color shadowColor = Color(0x1AFF9A9E);
   static const double radiusSmall = AppRadius.input;
   static const double radiusMedium = AppRadius.button;
   static const double radiusLarge = AppRadius.card;
