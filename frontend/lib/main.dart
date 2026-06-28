@@ -8,12 +8,17 @@ import 'screens/home_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/settings/language_screen.dart';
 import 'generated/l10n/app_localizations.dart';
+import 'services/offline_queue.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox('settings');
   await Hive.openBox('cache');
+  await Hive.openBox('offline_queue');
+
+  // 初始化离线队列
+  await OfflineQueue().init();
 
   runApp(const DoubleSugarApp());
 }
