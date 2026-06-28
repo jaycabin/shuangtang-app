@@ -1,11 +1,10 @@
 class AppConstants {
   static const String appName = '双糖';
 
-  // 你的后端地址 — 开发用 10.0.2.2（Android 模拟器映射宿主机 localhost）
-  // 真机测试改成你电脑的局域网 IP
-  // 生产部署改成服务器域名/IP
-  static const String apiBaseUrl = 'http://10.0.2.2:10080/api/v1';
-  static const String wsBaseUrl = 'ws://10.0.2.2:10080/ws/v1';
+  // 后端地址 — 你的电脑 IP: 192.168.2.15
+  // 模拟器用 10.0.2.2, 真机同一 WiFi 用电脑局域网 IP
+  static const String apiBaseUrl = 'http://192.168.2.15:10080/api/v1';
+  static const String wsBaseUrl = 'ws://192.168.2.15:10080/ws/v1';
 
   // Storage keys
   static const String tokenKey = 'auth_token';
