@@ -62,8 +62,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await Future.delayed(const Duration(milliseconds: 600));
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      _showToast(e.toString().contains('code_expired') ? '验证码已过期' :
-                 e.toString().contains('code_invalid') ? '验证码错误' : '重置失败');
+      String msg = '重置失败';
+      try { final body = (e as dynamic).response?.data;
+        if (body != null) {
+          final m = body['message'] ?? '';
+          if (m.toString().contains('过期')) msg = '验证码已过期';
+          else if (m.toString().contains('错误')) msg = '验证码错误';
+          else msg = m;
+        }
+      } catch (_) {}
+      _showToast(msg);
     } finally { if (mounted) setState(() => _loading = false); }
   }
 
