@@ -62,6 +62,15 @@ func (h *CoupleHandler) Create(c *gin.Context) {
 	lang := middleware.GetLang(c)
 	userID := middleware.GetUserID(c)
 
+	// 已有情侣空间则直接返回现有邀请码
+	if existing, err := h.coupleRepo.FindByUserID(c.Request.Context(), userID); err == nil && existing != nil {
+		c.JSON(http.StatusOK, model.APIResponse{
+			Code: 200, Message: i18n.T(lang, "success.couple_created"),
+			Data: existing,
+		})
+		return
+	}
+
 	var req model.CreateCoupleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, model.APIResponse{
@@ -97,6 +106,14 @@ func (h *CoupleHandler) Create(c *gin.Context) {
 func (h *CoupleHandler) Join(c *gin.Context) {
 	lang := middleware.GetLang(c)
 	userID := middleware.GetUserID(c)
+
+	// 加入者不能已有情侣空间
+	if existing, _ := h.coupleRepo.FindByUserID(c.Request.Context(), userID); existing != nil {
+		c.JSON(http.StatusBadRequest, model.APIResponse{
+			Code: 400, Message: i18n.T(lang, "error.couple_already_active"),
+		})
+		return
+	}
 
 	var req model.JoinCoupleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

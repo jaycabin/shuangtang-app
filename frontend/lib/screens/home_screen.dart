@@ -39,13 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _createCouple() async {
     try {
-      // 先检查是否已有情侣空间
-      final check = await _api.getCoupleInfo();
-      if (check['data'] != null && check['data']['couple'] != null) {
-        _showToast('已经有情侣空间了');
-        await _checkCouple();
-        return;
-      }
       final r = await _api.createCouple();
       _inviteCode = r['data']?['invitation_code'] as String?;
       if (!mounted) return;
