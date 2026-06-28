@@ -54,6 +54,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _loading = true);
     try {
       await _api.register(_emailCtl.text, _passCtl.text, _codeCtl.text, nickname: _nameCtl.text);
+      // 注册成功后自动登录（保存 token）
+      await _api.login(_emailCtl.text, _passCtl.text);
       if (!mounted) return;
       _showToast('🎉 注册成功');
       await Future.delayed(const Duration(milliseconds: 600));
