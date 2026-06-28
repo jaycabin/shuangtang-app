@@ -8,9 +8,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/render"
 	"github.com/shuangtang-app/backend/internal/config"
-	"github.com/shuangtang-app/backend/internal/i18n"
 	"github.com/shuangtang-app/backend/internal/repository"
 )
 

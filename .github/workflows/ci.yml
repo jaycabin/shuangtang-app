@@ -223,6 +223,10 @@ jobs:
         working-directory: ./frontend
         run: flutter gen-l10n
 
+      - name: Generate iOS platform files
+        working-directory: ./frontend
+        run: flutter create --project-name shuangtang_app --platforms=ios .
+
       - name: Build iOS (no codesign)
         working-directory: ./frontend
         run: flutter build ios --release --no-codesign
