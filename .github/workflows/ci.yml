@@ -1,0 +1,238 @@
+name: CI - Build Backend & Flutter APK & IPA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE: shuangtang-backend
+
+jobs:
+  backend:
+    name: Backend - Test & Build
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: shuangtang
+          POSTGRES_PASSWORD: shuangtang_test
+          POSTGRES_DB: shuangtang_test
+        ports:
+          - 15432:15432
+        options: >-
+          --health-cmd "pg_isready -U shuangtang -p 15432"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 16379:16379
+        options: >-
+          --health-cmd "redis-cli -p 16379 ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: backend/go.sum
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('backend/go.sum') }}
+          restore-keys: ${{ runner.os }}-go-
+
+      - name: Run tests
+        working-directory: ./backend
+        run: go test ./... -v -cover
+        env:
+          DB_HOST: localhost
+          DB_PORT: 15432
+          DB_USER: shuangtang
+          DB_PASSWORD: shuangtang_test
+          DB_NAME: shuangtang_test
+          REDIS_HOST: localhost
+          REDIS_PORT: 16379
+          JWT_SECRET: test-secret
+          DEFAULT_LANG: zh
+
+      - name: Build binary
+        working-directory: ./backend
+        run: go build -ldflags="-s -w" -o shuangtang-backend ./cmd/server
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+
+  build-apk:
+    name: Flutter - Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.19.x"
+          channel: "stable"
+          cache: true
+
+      - name: Verify Flutter
+        run: flutter doctor
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: flutter pub get
+
+      - name: Generate localization
+        working-directory: ./frontend
+        run: flutter gen-l10n
+
+      - name: Build APK (release)
+        working-directory: ./frontend
+        run: flutter build apk --release --split-per-abi
+
+      - name: Build APK (universal)
+        working-directory: ./frontend
+        run: flutter build apk --release
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: shuangtang-apk
+          path: |
+            frontend/build/app/outputs/flutter-apk/app-release.apk
+            frontend/build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+            frontend/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+            frontend/build/app/outputs/flutter-apk/app-x86_64-release.apk
+          retention-days: 30
+
+  build-appbundle:
+    name: Flutter - Build App Bundle
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.19.x"
+          channel: "stable"
+          cache: true
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: flutter pub get
+
+      - name: Generate localization
+        working-directory: ./frontend
+        run: flutter gen-l10n
+
+      - name: Build App Bundle (AAB)
+        working-directory: ./frontend
+        run: flutter build appbundle --release
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: shuangtang-aab
+          path: frontend/build/app/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+  build-ipa:
+    name: Flutter - Build IPA (unsigned)
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.19.x"
+          channel: "stable"
+          cache: true
+
+      - name: Verify Flutter
+        run: flutter doctor
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: flutter pub get
+
+      - name: Generate localization
+        working-directory: ./frontend
+        run: flutter gen-l10n
+
+      - name: Build iOS (no codesign)
+        working-directory: ./frontend
+        run: flutter build ios --release --no-codesign
+
+      - name: Create IPA directory
+        run: |
+          mkdir -p build/ios/ipa/Payload
+          cp -r frontend/build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          cd build/ios/ipa
+          zip -r ../../shuangtang.ipa Payload/
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: shuangtang-ipa
+          path: build/shuangtang.ipa
+          retention-days: 30
+
+  release-summary:
+    name: Release Summary
+    needs: [backend, build-apk, build-appbundle, build-ipa]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate release summary
+        run: |
+          echo "## 🍬 双糖构建完成" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend Docker Image | ✅ Pushed to ghcr.io |" >> $GITHUB_STEP_SUMMARY
+          echo "| APK (arm64-v8a) | ✅ Ready for download |" >> $GITHUB_STEP_SUMMARY
+          echo "| APK (armeabi-v7a) | ✅ Ready for download |" >> $GITHUB_STEP_SUMMARY
+          echo "| APK (x86_64) | ✅ Ready for download |" >> $GITHUB_STEP_SUMMARY
+          echo "| APK (universal) | ✅ Ready for download |" >> $GITHUB_STEP_SUMMARY
+          echo "| AAB (Play Store) | ✅ Ready for download |" >> $GITHUB_STEP_SUMMARY
+          echo "| IPA (iOS unsigned) | ✅ Ready for download |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> 提交: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

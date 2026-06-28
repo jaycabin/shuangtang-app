@@ -1,0 +1,50 @@
+{{template "base.html" .}}
+{{define "content"}}
+<div class="card">
+    <h2>⚙️ 系统配置</h2>
+    <form method="POST" action="/admin/settings/save">
+        <div class="form-group">
+            <label>应用名称</label>
+            <input type="text" name="app_name" value="{{index .configs "app_name"}}" placeholder="双糖">
+        </div>
+        <div class="form-group">
+            <label>Logo URL</label>
+            <input type="url" name="app_logo_url" value="{{index .configs "app_logo_url"}}" placeholder="https://example.com/logo.png">
+        </div>
+        <div class="form-group">
+            <label>文件存储策略</label>
+            <select name="file_storage">
+                <option value="local" {{if eq (index .configs "file_storage") "local"}}selected{{end}}>本地存储</option>
+                <option value="minio" {{if eq (index .configs "file_storage") "minio"}}selected{{end}}>MinIO (S3兼容)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>MinIO 端点</label>
+            <input type="text" name="minio_endpoint" value="{{index .configs "minio_endpoint"}}" placeholder="localhost:9000">
+        </div>
+        <div class="form-group">
+            <label>MinIO Access Key</label>
+            <input type="text" name="minio_access_key" value="{{index .configs "minio_access_key"}}" placeholder="access key">
+        </div>
+        <div class="form-group">
+            <label>MinIO Secret Key</label>
+            <input type="password" name="minio_secret_key" placeholder="输入 MinIO 密钥">
+        </div>
+        <div class="form-group">
+            <label>MinIO Bucket</label>
+            <input type="text" name="minio_bucket" value="{{index .configs "minio_bucket"}}" placeholder="shuangtang">
+        </div>
+        <button type="submit" class="btn btn-primary">保存配置</button>
+    </form>
+</div>
+
+<div class="card">
+    <h2>🌐 语言管理</h2>
+    <p style="color: #888; margin-bottom: 12px;">当前支持的语言可通过后端 locale JSON 文件管理。</p>
+    <div style="display: flex; gap: 12px;">
+        <span style="background: #fef3f2; padding: 8px 16px; border-radius: 20px; font-size: 14px;">🇨🇳 中文 (zh)</span>
+        <span style="background: #f0f8ff; padding: 8px 16px; border-radius: 20px; font-size: 14px;">🇺🇸 English (en)</span>
+    </div>
+    <p style="color: #999; font-size: 13px; margin-top: 12px;">如需添加语言，请在 backend/locales/ 目录下新建 {lang}.json 文件。</p>
+</div>
+{{end}}

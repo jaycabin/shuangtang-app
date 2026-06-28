@@ -1,0 +1,17 @@
+{{template "base.html" .}}
+{{define "content"}}
+<div class="card" style="max-width: 400px; margin: 60px auto;">
+    <h2 style="text-align: center; font-size: 24px; margin-bottom: 24px;">管理员登录</h2>
+    <form method="POST" action="/admin/login">
+        <div class="form-group">
+            <label>邮箱</label>
+            <input type="email" name="email" required placeholder="admin@shuangtang.app">
+        </div>
+        <div class="form-group">
+            <label>密码</label>
+            <input type="password" name="password" required placeholder="输入密码">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">登录</button>
+    </form>
+</div>
+{{end}}

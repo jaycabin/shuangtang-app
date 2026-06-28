@@ -1,0 +1,96 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "10080:10080"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 15432
+      REDIS_HOST: redis
+      REDIS_PORT: 16379
+      MINIO_ENDPOINT: minio:19000
+      FILE_STORAGE: minio
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
+    networks:
+      - shuangtang-net
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    command: -p 15432
+    environment:
+      POSTGRES_USER: shuangtang
+      POSTGRES_PASSWORD: shuangtang_secret
+      POSTGRES_DB: shuangtang
+    ports:
+      - "15432:15432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - shuangtang-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shuangtang -p 15432"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --port 16379
+    ports:
+      - "16379:16379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - shuangtang-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "16379", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":19001"
+    environment:
+      MINIO_ROOT_USER: shuangtang
+      MINIO_ROOT_PASSWORD: shuangtang_secret
+    ports:
+      - "19000:19000"
+      - "19001:19001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - shuangtang-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:19000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  shuangtang-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
+  uploads:

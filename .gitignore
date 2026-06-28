@@ -1,0 +1,42 @@
+# Go
+backend/tmp/
+backend/server
+backend/*.exe
+*.exe
+*.test
+*.out
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Flutter
+frontend/build/
+frontend/.dart_tool/
+frontend/.packages
+frontend/.pub/
+frontend/pubspec.lock
+frontend/android/.gradle/
+frontend/android/app/build/
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/Flutter/Flutter.framework
+frontend/ios/Flutter/Flutter.podspec
+
+# Docker
+.postgres-data/
+.redis-data/
+.minio-data/
+
+# Logs
+*.log

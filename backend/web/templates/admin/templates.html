@@ -1,0 +1,30 @@
+{{template "base.html" .}}
+{{define "content"}}
+<div class="card">
+    <h2>📝 邮件模板管理</h2>
+    <p style="color: #888; margin-bottom: 16px;">支持多语言版本，每种语言独立模板。变量 <code>{{"{{code}}"}}</code>、<code>{{"{{expire}}"}}</code> 可在模板中使用。</p>
+
+    <form method="POST" action="/admin/templates/save">
+        <div class="form-group">
+            <label>验证码邮件标题（中文）</label>
+            <input type="text" name="zh_verification_subject" value="【双糖】您的验证码">
+        </div>
+        <div class="form-group">
+            <label>验证码邮件正文（中文）</label>
+            <textarea name="zh_verification_body" rows="4">&lt;h2&gt;双糖验证码&lt;/h2&gt;&lt;p&gt;您的验证码是：&lt;strong&gt;{{"{{code}}"}}&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;有效期 {{"{{expire}}"}} 分钟。&lt;/p&gt;</textarea>
+        </div>
+        <div class="form-group">
+            <label>Verification Subject (English)</label>
+            <input type="text" name="en_verification_subject" value="[DoubleSugar] Your Verification Code">
+        </div>
+        <div class="form-group">
+            <label>Verification Body (English)</label>
+            <textarea name="en_verification_body" rows="4">&lt;h2&gt;DoubleSugar Verification&lt;/h2&gt;&lt;p&gt;Your code: &lt;strong&gt;{{"{{code}}"}}&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;Valid for {{"{{expire}}"}} minutes.&lt;/p&gt;</textarea>
+        </div>
+        <div style="background: #fff8e1; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; color: #f57f17;">
+            💡 提示：语言包可在系统配置中管理，当前支持中文 (zh) 和英文 (en)。
+        </div>
+        <button type="submit" class="btn btn-primary">保存模板</button>
+    </form>
+</div>
+{{end}}
