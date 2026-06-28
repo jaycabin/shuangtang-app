@@ -84,7 +84,7 @@ jobs:
       - name: Package backend zip
         run: |
           cd backend
-          cp ../.env.example .env
+          cp .env.example .env
           zip -r ../shuangtang-backend.zip \
             shuangtang-backend-linux shuangtang-backend.exe shuangtang-backend-macos \
             locales/ migrations/ web/ entrypoint.sh .env Dockerfile docker-compose.yml Makefile
@@ -239,7 +239,8 @@ jobs:
           cd build/ios/ipa
           zip -r ../shuangtang-v${VERSION}.ipa Payload/
           cd ../..
-          mv build/ios/shuangtang-v*.ipa .
+          mv ios/shuangtang-v${VERSION}.ipa .
+          ls -la *.ipa
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
