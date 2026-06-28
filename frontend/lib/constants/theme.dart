@@ -90,7 +90,7 @@ class AppTheme {
       ),
       hintStyle: const TextStyle(color: textHint),
     ),
-    cardTheme: CardThemeData(
+    cardTheme: CardTheme(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radiusMedium),
