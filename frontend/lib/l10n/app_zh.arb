@@ -89,5 +89,22 @@
   "fail": "失败",
   "today": "今天",
   "yesterday": "昨天",
-  "days": "天"
+  "days": "天",
+
+  "toast_send_fail": "发送失败",
+  "toast_register_success": "🎉 注册成功",
+  "toast_register_fail": "注册失败",
+  "toast_login_fail": "邮箱或密码错误",
+  "toast_code_error": "验证码错误",
+  "toast_code_expired": "验证码已过期",
+  "toast_email_exists": "邮箱已注册",
+  "toast_reset_fail": "重置失败",
+  "toast_create_fail": "创建失败",
+  "toast_join_success": "🎉 加入成功",
+  "toast_invalid_code": "邀请码无效",
+  "toast_copied": "已复制",
+  "toast_alarm_set": "⏰ 闹钟已设置",
+  "toast_select_photo": "请从相册选择照片",
+  "hint_invite_code": "输入邀请码",
+  "hint_nickname": "对方怎么称呼你"
 }

@@ -89,5 +89,22 @@
   "fail": "Failed",
   "today": "Today",
   "yesterday": "Yesterday",
-  "days": "days"
+  "days": "days",
+
+  "toast_send_fail": "Send failed",
+  "toast_register_success": "🎉 Registered!",
+  "toast_register_fail": "Registration failed",
+  "toast_login_fail": "Invalid email or password",
+  "toast_code_error": "Invalid code",
+  "toast_code_expired": "Code expired",
+  "toast_email_exists": "Email already registered",
+  "toast_reset_fail": "Reset failed",
+  "toast_create_fail": "Create failed",
+  "toast_join_success": "🎉 Joined!",
+  "toast_invalid_code": "Invalid invitation code",
+  "toast_copied": "Copied",
+  "toast_alarm_set": "⏰ Alarm set!",
+  "toast_select_photo": "Please select a photo",
+  "hint_invite_code": "Enter invitation code",
+  "hint_nickname": "What should I call you"
 }
