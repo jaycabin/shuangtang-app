@@ -72,18 +72,15 @@ class ApiService {
 
   // ========== Check-in ==========
   Future<Map<String, dynamic>> getCheckInTasks() => _get('/checkin/tasks');
-  Future<Map<String, dynamic>> doCheckIn(String taskId) => _post('/checkin/$taskId');
-
-  // ========== Wishlist ==========
-  Future<Map<String, dynamic>> getWishlist() => _get('/wishlist');
-  Future<Map<String, dynamic>> addWish(Map<String, dynamic> data) => _post('/wishlist', data);
-  Future<Map<String, dynamic>> claimWish(String id) => _post('/wishlist/$id/claim');
-  Future<Map<String, dynamic>> completeWish(String id) => _post('/wishlist/$id/complete');
+  Future<Map<String, dynamic>> doCheckIn(String taskId) => _post('/checkin/$taskId', {});
+  Future<Map<String, dynamic>> claimWish(String id) => _post('/wishlist/$id/claim', {});
+  Future<Map<String, dynamic>> completeWish(String id) => _post('/wishlist/$id/complete', {});
+  Future<Map<String, dynamic>> readSecretMessage(String id) => _post('/secret-messages/$id/read', {});
 
   // ========== Secret Messages ==========
   Future<Map<String, dynamic>> getSecretMessages() => _get('/secret-messages');
   Future<Map<String, dynamic>> sendSecretMessage(String content) => _post('/secret-messages', {'content': content});
-  Future<Map<String, dynamic>> readSecretMessage(String id) => _post('/secret-messages/$id/read');
+  Future<Map<String, dynamic>> readSecretMessage(String id) => _post('/secret-messages/$id/read', {});
 
   // ========== Albums ==========
   Future<Map<String, dynamic>> getAlbums() => _get('/albums');

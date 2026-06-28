@@ -26,6 +26,7 @@ frontend/.dart_tool/
 frontend/.packages
 frontend/.pub/
 frontend/pubspec.lock
+frontend/lib/generated/
 frontend/android/.gradle/
 frontend/android/app/build/
 frontend/ios/Pods/
