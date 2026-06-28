@@ -1,6 +1,6 @@
 name: shuangtang_app
 description: 双糖 - 情侣专属私密空间
-version: 1.0.0+1
+version: 1.4.0+1
 
 environment:
   sdk: '>=3.2.0 <4.0.0'

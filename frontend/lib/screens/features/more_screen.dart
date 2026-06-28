@@ -4,6 +4,8 @@ import '../../constants/theme.dart';
 import 'secret_message_screen.dart';
 import 'album_screen.dart';
 
+const _appVersion = '1.4.0';
+
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
 
@@ -45,7 +47,7 @@ class MoreScreen extends StatelessWidget {
           _menuCard(context, '📸 糖分相册', '保存每一颗糖的照片', () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AlbumScreen()))),
           const SizedBox(height: 8),
           _menuCard(context, '🌐 语言', '中文', () => Navigator.pushNamed(context, '/settings/language')),
-          _menuCard(context, 'ℹ️ 关于', 'v1.2', () {}),
+          _menuCard(context, 'ℹ️ 关于', 'v$_appVersion', () {}),
 
           const SizedBox(height: 32),
           Container(
