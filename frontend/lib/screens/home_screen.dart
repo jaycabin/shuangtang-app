@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await _showInviteDialog();
       await _checkCouple();
     } catch (e) {
-      _showToast('创建失败');
+      _showToast('创建失败', isError: true);
     }
   }
 
@@ -55,7 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _showToast('🎉 加入成功');
       await _checkCouple();
     } catch (e) {
-      _showToast('邀请码无效');
+      _showToast('邀请码无效', isError: true);
     }
   }
 
@@ -111,10 +111,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showToast(String msg) {
+  void _showToast(String msg, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg, textAlign: TextAlign.center),
-      backgroundColor: AppColors.darkText,
+      backgroundColor: isError ? AppColors.alertRed.withOpacity(0.9) : AppColors.darkText,
       behavior: SnackBarBehavior.floating,
       margin: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.tag)),

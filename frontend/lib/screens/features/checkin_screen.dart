@@ -115,9 +115,11 @@ class _CheckInScreenState extends State<CheckInScreen> {
   Widget _buildEmpty() => Padding(
     padding: const EdgeInsets.only(top: 60),
     child: Column(children: [
-      const Text('✅', style: TextStyle(fontSize: 64)),
+      const Text('☁️', style: TextStyle(fontSize: 64)),
       const SizedBox(height: 12),
-      const Text('还没有打卡任务', style: TextStyle(color: AppColors.caramel)),
+      const Text('今天还没有打卡任务哦', style: TextStyle(color: AppColors.caramel, fontSize: 15)),
+      const SizedBox(height: 4),
+      const Text('点击下方 + 创建吧', style: TextStyle(color: AppColors.greyText, fontSize: 13)),
     ]),
   );
 }
