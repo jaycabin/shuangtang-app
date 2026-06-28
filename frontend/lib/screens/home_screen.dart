@@ -39,9 +39,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _createCouple() async {
     try {
+      // 先检查是否已有情侣空间
+      final check = await _api.getCoupleInfo();
+      if (check['data'] != null && check['data']['couple'] != null) {
+        _showToast('已经有情侣空间了');
+        await _checkCouple();
+        return;
+      }
       final r = await _api.createCouple();
       _inviteCode = r['data']?['invitation_code'] as String?;
-      _showInviteDialog();
+      if (!mounted) return;
+      await _showInviteDialog();
+      await _checkCouple();
     } catch (e) {
       _showToast('创建失败');
     }
@@ -57,27 +66,33 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _showInviteDialog() {
-    showDialog(
+  Future<void> _showInviteDialog() async {
+    final code = _inviteCode ?? '';
+    await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.dialog)),
         title: const Text('🎉 空间已创建', textAlign: TextAlign.center),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('让对方输入邀请码：'),
+          const Text('邀请码（点击复制）：'),
           const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.frostingWhite,
-              borderRadius: BorderRadius.circular(AppRadius.input),
+          GestureDetector(
+            onTap: () { _showToast('已复制'); },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              decoration: BoxDecoration(color: AppColors.frostingWhite, borderRadius: BorderRadius.circular(AppRadius.input)),
+              child: Text(code, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 6, color: AppColors.peach)),
             ),
-            child: Text(_inviteCode ?? '', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 6, color: AppColors.peach)),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           const Text('对方在 App 中选择"加入空间"输入此代码', style: TextStyle(fontSize: 13, color: AppColors.caramel), textAlign: TextAlign.center),
         ]),
-        actions: [Center(child: TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('知道了')),)],
+        actions: [Center(
+          child: TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('进入双糖空间', style: TextStyle(color: AppColors.peach, fontWeight: FontWeight.bold)),
+          ),
+        )],
       ),
     );
   }
