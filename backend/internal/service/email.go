@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -66,7 +67,11 @@ func (s *EmailService) SendTemplateEmail(to, subject, templateName string, data 
 
 func (s *EmailService) send(to, subject, body string) error {
 	if s.dialer == nil {
-		return fmt.Errorf("SMTP not configured")
+		// 开发模式：没有配置 SMTP 时，把验证码打印到日志
+		log.Printf("📧 [DEV] 邮件发送到 %s", to)
+		log.Printf("📧 [DEV] 主题: %s", subject)
+		log.Printf("📧 [DEV] 正文: %s", body)
+		return nil
 	}
 
 	m := gomail.NewMessage()

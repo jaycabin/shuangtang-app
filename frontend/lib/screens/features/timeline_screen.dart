@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import '../../constants/theme.dart';
 import '../../services/api_service.dart';
 
@@ -12,157 +11,98 @@ class TimelineScreen extends StatefulWidget {
 }
 
 class _TimelineScreenState extends State<TimelineScreen> {
-  List<Map<String, dynamic>> _moments = [];
-  Map<String, dynamic>? _couple;
-  Map<String, dynamic>? _partner;
-  List<Map<String, dynamic>> _anniversaries = [];
-  bool _loading = true;
   final _momentCtl = TextEditingController();
   final _scrollCtrl = ScrollController();
+  List<Map<String, dynamic>> _moments = [];
+  Map<String, dynamic>? _couple;
+  List<Map<String, dynamic>> _anniversaries = [];
+  bool _loading = true;
+  int _days = 0;
 
   @override
-  void initState() {
-    super.initState();
-    _load();
-    _scrollCtrl.addListener(() {
-      if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
-        _loadMore();
-      }
-    });
-  }
+  void initState() { super.initState(); _load(); }
 
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      _couple = (await _api.getCoupleInfo())['data'];
+      final r = await _api.getCoupleInfo();
+      _couple = r['data'];
       _moments = (_couple?['moments'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-      _anniversaries = (await _api.getAnniversaries())['data'] ?? [];
+      _anniversaries = ((await _api.getAnniversaries())['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      if (_couple?['couple']?['started_at'] != null) {
+        _days = DateTime.now().difference(DateTime.parse(_couple!['couple']['started_at'])).inDays;
+      }
     } catch (_) {}
     setState(() => _loading = false);
   }
 
-  Future<void> _loadMore() async {}
-
-  Future<void> _postMoment() async {
-    if (_momentCtl.text.trim().isEmpty) return;
-    try {
-      await _api.createMoment({'content': _momentCtl.text.trim()});
-      _momentCtl.clear();
-      await _load();
-    } catch (_) {}
-  }
-
   @override
-  void dispose() {
-    _momentCtl.dispose();
-    _scrollCtrl.dispose();
-    super.dispose();
-  }
+  void dispose() { _momentCtl.dispose(); _scrollCtrl.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
-    final days = _couple?['couple']?['started_at'] != null
-        ? DateTime.now().difference(DateTime.parse(_couple!['couple']['started_at'])).inDays
-        : 0;
-
     return Scaffold(
       appBar: AppBar(
-        title: Row(children: [
-          const Text('🍬', style: TextStyle(fontSize: 20)),
-          const SizedBox(width: 4),
-          const Text('双糖', style: TextStyle(fontWeight: FontWeight.w600)),
-          const Spacer(),
-          if (_couple != null)
-            Text('$days 天', style: TextStyle(color: AppTheme.primaryStart, fontSize: 13)),
-        ]),
+        title: const Text('糖罐首页'),
+        centerTitle: true,
         actions: [
-          IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined, color: AppColors.caramel),
+            onPressed: () {},
+          ),
         ],
       ),
       body: RefreshIndicator(
-        color: AppTheme.primaryStart,
+        color: AppColors.peach,
         onRefresh: _load,
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryStart))
-            : ListView(
-                controller: _scrollCtrl,
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _buildTopCard(days),
+          ? const Center(child: CircularProgressIndicator(color: AppColors.peach))
+          : ListView(
+              controller: _scrollCtrl,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              children: [
+                const SizedBox(height: 8),
+                // 顶部氛围卡
+                _buildAtmosphereCard(),
+                const SizedBox(height: 16),
+                // 纪念日倒计时
+                if (_anniversaries.isNotEmpty) ...[
+                  _buildAnniversaryCard(),
                   const SizedBox(height: 16),
-                  _buildQuickMoment(),
-                  const SizedBox(height: 16),
-                  if (_anniversaries.isNotEmpty) _buildAnniversaryCard(),
-                  const SizedBox(height: 12),
-                  ..._moments.map((m) => _buildMomentCard(m)),
-                  if (_moments.isEmpty) _buildEmptyState(),
                 ],
-              ),
+                // 时间线
+                ..._moments.map((m) => _buildMomentCard(m)),
+                if (_moments.isEmpty) _buildEmptyState(),
+                const SizedBox(height: 80),
+              ],
+            ),
       ),
     );
   }
 
-  Widget _buildTopCard(int days) {
+  Widget _buildAtmosphereCard() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: AppTheme.primaryGradient,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        boxShadow: AppTheme.cardShadow,
+        gradient: AppColors.brandGradient,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        boxShadow: AppShadows.card,
       ),
       child: Column(children: [
         const Text('🍯', style: TextStyle(fontSize: 40)),
-        const SizedBox(height: 8),
-        Text('攒了 $days 颗糖的日子',
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+        const SizedBox(height: 12),
+        Text('攒了 $_days 颗糖的日子',
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
         const SizedBox(height: 4),
-        Text('两颗心，双倍糖', style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.8))),
+        Text('两颗心，双倍糖', style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.85))),
       ]),
     );
   }
-
-  Widget _buildQuickMoment() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppTheme.radiusMedium), boxShadow: AppTheme.cardShadow),
-      child: Column(children: [
-        Row(children: [
-          const CircleAvatar(radius: 18, backgroundColor: AppTheme.primaryStart, child: Icon(Icons.person, color: Colors.white, size: 20)),
-          const SizedBox(width: 12),
-          Expanded(child: TextField(
-            controller: _momentCtl, maxLines: 2,
-            decoration: const InputDecoration(hintText: '今天想撒什么糖？', border: InputBorder.none, isDense: true),
-          )),
-        ]),
-        const Divider(height: 8),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Row(children: [
-            _iconBtn(Icons.emoji_emotions_outlined),
-            _iconBtn(Icons.photo_library_outlined),
-            _iconBtn(Icons.location_on_outlined),
-          ]),
-          Container(
-            decoration: BoxDecoration(gradient: AppTheme.buttonGradient, borderRadius: BorderRadius.circular(20)),
-            child: TextButton(
-              onPressed: _postMoment,
-              child: const Text('撒颗糖', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-            ),
-          ),
-        ]),
-      ]),
-    );
-  }
-
-  Widget _iconBtn(IconData icon) => IconButton(
-    icon: Icon(icon, color: AppTheme.textHint, size: 20),
-    constraints: const BoxConstraints(minWidth: 36, minHeight: 36), padding: EdgeInsets.zero, onPressed: () {});
 
   Widget _buildAnniversaryCard() {
     final next = _anniversaries.firstWhere(
-      (a) {
-        final d = DateTime.parse(a['date']);
-        return d.isAfter(DateTime.now().subtract(const Duration(days: 1)));
-      },
+      (a) => DateTime.parse(a['date']).isAfter(DateTime.now().subtract(const Duration(days: 1))),
       orElse: () => _anniversaries.first,
     );
     final date = DateTime.parse(next['date']);
@@ -170,57 +110,78 @@ class _TimelineScreenState extends State<TimelineScreen> {
     final title = next['title']?['zh'] ?? '纪念日';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [AppTheme.primaryStart.withOpacity(0.1), AppTheme.primaryEnd.withOpacity(0.1)]),
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-        border: Border.all(color: AppTheme.primaryStart.withOpacity(0.2)),
+        color: AppColors.frostingWhite,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        boxShadow: AppShadows.card,
       ),
       child: Row(children: [
-        Text(next['icon'] ?? '❤️', style: const TextStyle(fontSize: 32)),
-        const SizedBox(width: 12),
+        Text(next['icon'] ?? '❤️', style: const TextStyle(fontSize: 36)),
+        const SizedBox(width: 16),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-          Text(diff == 0 ? '就是今天！' : diff < 0 ? '已过去 ${-diff} 天' : '还剩 $diff 天',
-            style: TextStyle(color: diff == 0 ? AppTheme.primaryStart : AppTheme.textSecondary, fontSize: 13)),
+          Text(title, style: AppTextStyles.h3),
+          const SizedBox(height: 2),
+          Text(diff == 0 ? '🎉 就是今天！' : '还剩 $diff 天',
+            style: TextStyle(fontSize: 13, color: diff == 0 ? AppColors.peach : AppColors.caramel)),
         ])),
-        Text('$diff', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: AppTheme.primaryStart)),
+        if (diff > 0)
+          Text('$diff', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.peach)),
       ]),
     );
   }
 
   Widget _buildMomentCard(Map<String, dynamic> m) {
-    final author = m['author_id']?.toString() ?? '';
-    final isMe = author == Hive.box('settings').get('user_id');
-
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppTheme.radiusMedium), boxShadow: AppTheme.cardShadow),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.frostingWhite,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        boxShadow: AppShadows.card,
+      ),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         CircleAvatar(
-          radius: 16, backgroundColor: isMe ? AppTheme.primaryStart : AppTheme.primaryEnd,
-          child: Text(isMe ? '我' : 'TA', style: const TextStyle(color: Colors.white, fontSize: 12)),
+          radius: 18,
+          backgroundColor: AppColors.peach.withOpacity(0.15),
+          child: Text(m['type'] == 'moment' ? '📸' : m['type'] == 'checkin' ? '✅' : '💝',
+            style: const TextStyle(fontSize: 16)),
         ),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(m['content'] ?? '', style: const TextStyle(fontSize: 15, color: AppTheme.textPrimary)),
+          Text(m['content'] ?? '', style: AppTextStyles.body),
           if (m['mood_tag'] != null && m['mood_tag'] != '')
-            Padding(padding: const EdgeInsets.only(top: 4),
-              child: Text('#${m['mood_tag']}', style: TextStyle(color: AppTheme.primaryStart, fontSize: 12))),
-          Padding(padding: const EdgeInsets.only(top: 4),
-            child: Text(_fmt(m['created_at']), style: const TextStyle(color: AppTheme.textHint, fontSize: 11))),
+            Padding(padding: const EdgeInsets.only(top: 6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(color: AppColors.peach.withOpacity(0.1), borderRadius: BorderRadius.circular(AppRadius.tag)),
+                child: Text('#${m['mood_tag']}', style: const TextStyle(fontSize: 11, color: AppColors.peach)),
+              )),
+          Padding(padding: const EdgeInsets.only(top: 6),
+            child: Text(_fmt(m['created_at']), style: AppTextStyles.caption)),
         ])),
       ]),
     );
   }
 
   Widget _buildEmptyState() => Padding(
-    padding: const EdgeInsets.all(40),
+    padding: const EdgeInsets.only(top: 60),
     child: Column(children: [
-      const Text('📝', style: TextStyle(fontSize: 48)), const SizedBox(height: 12),
-      const Text('还没有糖，快撒第一颗吧', style: TextStyle(color: AppTheme.textHint)),
+      const Text('🍬', style: TextStyle(fontSize: 64)),
+      const SizedBox(height: 16),
+      const Text('你们的糖，从这里开始攒起', style: TextStyle(fontSize: 15, color: AppColors.caramel)),
+      const SizedBox(height: 24),
+      Container(
+        height: 48,
+        decoration: BoxDecoration(gradient: AppColors.brandGradient, borderRadius: BorderRadius.circular(AppRadius.button), boxShadow: AppShadows.button),
+        child: ElevatedButton(
+          onPressed: () {},
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent,
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))),
+          child: const Text('撒第一颗糖', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ),
+      ),
     ]),
   );
 
