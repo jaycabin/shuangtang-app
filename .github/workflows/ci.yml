@@ -35,6 +35,12 @@ jobs:
         working-directory: ./frontend
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          # 确保是 x.y.z 三段的 semver 格式
+          case "$VERSION" in
+            *.*.*) ;;
+            *.*) VERSION="$VERSION.0" ;;
+            *) VERSION="$VERSION.0.0" ;;
+          esac
           sed -i "s/^version:.*/version: $VERSION+1/" pubspec.yaml
           echo "Version set to $VERSION"
 
