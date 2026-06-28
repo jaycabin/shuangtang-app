@@ -11,8 +11,6 @@ class TimelineScreen extends StatefulWidget {
 }
 
 class _TimelineScreenState extends State<TimelineScreen> {
-  final _momentCtl = TextEditingController();
-  final _scrollCtrl = ScrollController();
   List<Map<String, dynamic>> _moments = [];
   Map<String, dynamic>? _couple;
   List<Map<String, dynamic>> _anniversaries = [];
@@ -25,32 +23,29 @@ class _TimelineScreenState extends State<TimelineScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final r = await _api.getCoupleInfo();
-      _couple = r['data'];
-      _moments = (_couple?['moments'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-      _anniversaries = ((await _api.getAnniversaries())['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      final coupleR = await _api.getCoupleInfo();
+      _couple = coupleR['data'];
       if (_couple?['couple']?['started_at'] != null) {
         _days = DateTime.now().difference(DateTime.parse(_couple!['couple']['started_at'])).inDays;
       }
+      // 分别加载时间线和纪念日
+      final tlR = await _api.getTimeline();
+      _moments = (tlR['data']?['moments'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      _days = tlR['data']?['days_since'] ?? _days;
+    } catch (_) {}
+    try {
+      final aR = await _api.getAnniversaries();
+      _anniversaries = (aR['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
     } catch (_) {}
     setState(() => _loading = false);
   }
-
-  @override
-  void dispose() { _momentCtl.dispose(); _scrollCtrl.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('糖罐首页'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined, color: AppColors.caramel),
-            onPressed: () {},
-          ),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.notifications_outlined, color: AppColors.caramel), onPressed: () {})],
       ),
       body: RefreshIndicator(
         color: AppColors.peach,
@@ -58,19 +53,12 @@ class _TimelineScreenState extends State<TimelineScreen> {
         child: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.peach))
           : ListView(
-              controller: _scrollCtrl,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               children: [
                 const SizedBox(height: 8),
-                // 顶部氛围卡
                 _buildAtmosphereCard(),
                 const SizedBox(height: 16),
-                // 纪念日倒计时
-                if (_anniversaries.isNotEmpty) ...[
-                  _buildAnniversaryCard(),
-                  const SizedBox(height: 16),
-                ],
-                // 时间线
+                if (_anniversaries.isNotEmpty) ...[_buildAnniversaryCard(), const SizedBox(height: 16)],
                 ..._moments.map((m) => _buildMomentCard(m)),
                 if (_moments.isEmpty) _buildEmptyState(),
                 const SizedBox(height: 80),
@@ -82,18 +70,12 @@ class _TimelineScreenState extends State<TimelineScreen> {
 
   Widget _buildAtmosphereCard() {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: AppColors.brandGradient,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        boxShadow: AppShadows.card,
-      ),
+      width: double.infinity, padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(gradient: AppColors.brandGradient, borderRadius: BorderRadius.circular(AppRadius.card), boxShadow: AppShadows.card),
       child: Column(children: [
         const Text('🍯', style: TextStyle(fontSize: 40)),
         const SizedBox(height: 12),
-        Text('攒了 $_days 颗糖的日子',
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+        Text('攒了 $_days 颗糖的日子', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
         const SizedBox(height: 4),
         Text('两颗心，双倍糖', style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.85))),
       ]),
@@ -101,6 +83,7 @@ class _TimelineScreenState extends State<TimelineScreen> {
   }
 
   Widget _buildAnniversaryCard() {
+    if (_anniversaries.isEmpty) return const SizedBox();
     final next = _anniversaries.firstWhere(
       (a) => DateTime.parse(a['date']).isAfter(DateTime.now().subtract(const Duration(days: 1))),
       orElse: () => _anniversaries.first,
@@ -108,25 +91,18 @@ class _TimelineScreenState extends State<TimelineScreen> {
     final date = DateTime.parse(next['date']);
     final diff = date.difference(DateTime.now()).inDays;
     final title = next['title']?['zh'] ?? '纪念日';
-
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.frostingWhite,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        boxShadow: AppShadows.card,
-      ),
+      decoration: BoxDecoration(color: AppColors.frostingWhite, borderRadius: BorderRadius.circular(AppRadius.card), boxShadow: AppShadows.card),
       child: Row(children: [
         Text(next['icon'] ?? '❤️', style: const TextStyle(fontSize: 36)),
         const SizedBox(width: 16),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title, style: AppTextStyles.h3),
           const SizedBox(height: 2),
-          Text(diff == 0 ? '🎉 就是今天！' : '还剩 $diff 天',
-            style: TextStyle(fontSize: 13, color: diff == 0 ? AppColors.peach : AppColors.caramel)),
+          Text(diff == 0 ? '🎉 就是今天！' : '还剩 $diff 天', style: TextStyle(fontSize: 13, color: diff == 0 ? AppColors.peach : AppColors.caramel)),
         ])),
-        if (diff > 0)
-          Text('$diff', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.peach)),
+        if (diff > 0) Text('$diff', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.peach)),
       ]),
     );
   }
@@ -135,30 +111,19 @@ class _TimelineScreenState extends State<TimelineScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.frostingWhite,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-        boxShadow: AppShadows.card,
-      ),
+      decoration: BoxDecoration(color: AppColors.frostingWhite, borderRadius: BorderRadius.circular(AppRadius.card), boxShadow: AppShadows.card),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        CircleAvatar(
-          radius: 18,
-          backgroundColor: AppColors.peach.withOpacity(0.15),
-          child: Text(m['type'] == 'moment' ? '📸' : m['type'] == 'checkin' ? '✅' : '💝',
-            style: const TextStyle(fontSize: 16)),
-        ),
+        CircleAvatar(radius: 18, backgroundColor: AppColors.peach.withOpacity(0.15),
+          child: Text(m['type'] == 'moment' ? '📸' : '✅', style: const TextStyle(fontSize: 16))),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(m['content'] ?? '', style: AppTextStyles.body),
           if (m['mood_tag'] != null && m['mood_tag'] != '')
             Padding(padding: const EdgeInsets.only(top: 6),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(color: AppColors.peach.withOpacity(0.1), borderRadius: BorderRadius.circular(AppRadius.tag)),
-                child: Text('#${m['mood_tag']}', style: const TextStyle(fontSize: 11, color: AppColors.peach)),
-              )),
-          Padding(padding: const EdgeInsets.only(top: 6),
-            child: Text(_fmt(m['created_at']), style: AppTextStyles.caption)),
+                child: Text('#${m['mood_tag']}', style: const TextStyle(fontSize: 11, color: AppColors.peach)))),
+          Padding(padding: const EdgeInsets.only(top: 6), child: Text(_fmt(m['created_at']), style: AppTextStyles.caption)),
         ])),
       ]),
     );
@@ -167,18 +132,15 @@ class _TimelineScreenState extends State<TimelineScreen> {
   Widget _buildEmptyState() => Padding(
     padding: const EdgeInsets.only(top: 60),
     child: Column(children: [
-      const Text('🍬', style: TextStyle(fontSize: 64)),
-      const SizedBox(height: 16),
-      const Text('你们的糖，从这里开始攒起', style: TextStyle(fontSize: 15, color: AppColors.caramel)),
+      const Text('🍬', style: TextStyle(fontSize: 64)), const SizedBox(height: 16),
+      const Text('你们的糖，从这里开始攒起', style: TextStyle(color: AppColors.caramel)),
       const SizedBox(height: 24),
-      Container(
-        height: 48,
+      Container(height: 48,
         decoration: BoxDecoration(gradient: AppColors.brandGradient, borderRadius: BorderRadius.circular(AppRadius.button), boxShadow: AppShadows.button),
         child: ElevatedButton(
           onPressed: () {},
           style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent,
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))),
+            padding: const EdgeInsets.symmetric(horizontal: 32), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))),
           child: const Text('撒第一颗糖', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
       ),
